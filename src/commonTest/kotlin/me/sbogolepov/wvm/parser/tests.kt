@@ -2,6 +2,7 @@ package me.sbogolepov.wvm.parser
 
 import me.sbogolepov.wvm.io.*
 import me.sbogolepov.wvm.parser.generator.TypeSection
+import me.sbogolepov.wvm.parser.generator.ValueType
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -24,5 +25,9 @@ class Tests {
         val (sectionHeader, _) = reader.sectionHeader()
         val (section, _) = reader.sectionByHeader(sectionHeader)
         assertTrue { section is TypeSection }
+        val typeSection = section as TypeSection
+        assertEquals(1, typeSection.types.size)
+        assertEquals(1, typeSection.types[0].results.size)
+        assertEquals(ValueType.I32, typeSection.types[0].results[0])
     }
 }
