@@ -43,6 +43,59 @@ fun RawDataReader.valueType(): ParseResult<ValueType> {
     return ParseResult(type, 1)
 }
 
+fun RawDataReader.limits(): ParseResult<Limit> {
+    return if (readByte().toInt() == 0) {
+        val (min, r0) = u32()
+        ParseResult(Limit.Open(min), r0 + 1)
+    } else {
+        val (min, r0) = u32()
+        val (max, r1) = u32()
+        ParseResult(Limit.Closed(min, max), r0 + r1 + 1)
+    }
+}
+
+fun RawDataReader.tableType(): ParseResult<Table> {
+    check(readByte().toInt() == 0x70) { "Only FuncRef types are supported" }
+    val (limits, r0) = limits()
+    return ParseResult(Table(Table.ElementType.FuncRef, limits), r0+1)
+}
+
+fun RawDataReader.globalType(): ParseResult<GlobalType> {
+    val (valueType, r0) = valueType()
+    return ParseResult(GlobalType(valueType, readByte().toInt() == 0), r0 + 1)
+}
+
+fun RawDataReader.importDescription(): ParseResult<ImportDescription> {
+    val (importDesc, r1) = when (val byte = readByte().toInt()) {
+        0x00 -> {
+            val (typeIdx, r0) = u32()
+            FunctionImport(typeIdx) to r0
+        }
+        0x01 -> {
+           val (tableType, r0) = tableType()
+            TableImport(tableType) to r0
+        }
+        0x02 -> {
+            val (limits, r0) = limits()
+            MemoryImport(Memory(limits)) to r0
+        }
+        0x03 -> {
+            val (globalType, r0) = globalType()
+            GlobalImport(globalType) to r0
+        }
+        else -> error("Unexpected import description: ${byte.toString(16)}")
+    }
+    return ParseResult(importDesc, r1 + 1)
+}
+
+@ExperimentalStdlibApi
+fun RawDataReader.import(): ParseResult<Import> {
+    val (module, r1) = name()
+    val (name, r2) = name()
+    val (importDesc, r3) = importDescription()
+    return ParseResult(Import(module, name, importDesc), r1 + r2 + r3)
+}
+
 @ExperimentalStdlibApi
 fun RawDataReader.functionType(): ParseResult<FunctionType> {
     check(readByte().toInt() == 0x60) { "Function type should start with 0x60 byte" }
@@ -71,7 +124,11 @@ fun RawDataReader.typeSection(sectionHeader: SectionHeader): ParseResult<TypeSec
     return ParseResult(TypeSection(functions), read)
 }
 
-fun RawDataReader.importSection(sectionHeader: SectionHeader): ParseResult<ImportSection> { TODO() }
+@ExperimentalStdlibApi
+fun RawDataReader.importSection(sectionHeader: SectionHeader): ParseResult<ImportSection> {
+    val (imports, read) = vector { import() }
+    return ParseResult(ImportSection(imports), read)
+}
 
 fun RawDataReader.functionSection(sectionHeader: SectionHeader): ParseResult<FunctionSection> { TODO() }
 

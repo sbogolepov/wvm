@@ -28,6 +28,7 @@ sealed class Limit(val min: UInt) {
 
 class Memory(val limit: Limit)
 
+// TODO: Rename to TableType?
 class Table(val elementType: ElementType, val limit: Limit) {
     enum class ElementType {
         FuncRef
@@ -36,13 +37,15 @@ class Table(val elementType: ElementType, val limit: Limit) {
 
 class Global(val value: Value, val mutable: Boolean)
 
+class GlobalType(val valueType: ValueType, val mutable: Boolean)
+
 class Import(val module: String, val name: String, val description: ImportDescription)
 
 sealed class ImportDescription
 class FunctionImport(val typeIndex: UInt) : ImportDescription()
 class TableImport(val table: Table) : ImportDescription()
 class MemoryImport(val memory: Memory) : ImportDescription()
-class GlobalImport(val global: Global) : ImportDescription()
+class GlobalImport(val globalType: GlobalType) : ImportDescription()
 
 sealed class ExportDescription
 class FunctionExport(val typeIndex: UInt) : ExportDescription()
@@ -58,7 +61,7 @@ class SectionHeader(val id: Byte, val sizeInBytes: UInt)
 sealed class Section
 class CustomSection(val name: String, val data: ByteArray) : Section()
 class TypeSection(val types: Array<FunctionType>) : Section()
-class ImportSection(val imports: Array<ImportDescription>) : Section()
+class ImportSection(val imports: Array<Import>) : Section()
 class FunctionSection(val typesIndices: Array<UInt>) : Section()
 class TableSection(val tables: Array<Table>) : Section()
 class MemorySection(val memories: Array<Memory>) : Section()

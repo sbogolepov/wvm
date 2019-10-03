@@ -1,8 +1,7 @@
 package me.sbogolepov.wvm.parser
 
 import me.sbogolepov.wvm.io.*
-import me.sbogolepov.wvm.parser.generator.TypeSection
-import me.sbogolepov.wvm.parser.generator.ValueType
+import me.sbogolepov.wvm.parser.generator.*
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -22,12 +21,27 @@ class Tests {
             assertEquals(WASM_MAGIC[idx], value)
         }
         assertEquals(1u,reader.wasmVersion())
-        val (sectionHeader, _) = reader.sectionHeader()
-        val (section, _) = reader.sectionByHeader(sectionHeader)
+        val section = reader.readNextSection()
         assertTrue { section is TypeSection }
         val typeSection = section as TypeSection
         assertEquals(1, typeSection.types.size)
         assertEquals(1, typeSection.types[0].results.size)
         assertEquals(ValueType.I32, typeSection.types[0].results[0])
+        val importSection = reader.readNextSection()
+        assertTrue(importSection is ImportSection)
+        assertTrue(importSection.imports.size == 2)
+        val import = importSection.imports[0]
+        val description = import.description
+        assertTrue(description is MemoryImport)
+        assertEquals("env", import.module)
+        assertEquals("__linear_memory", import.name)
+        assertTrue(description.memory.limit is Limit.Open)
+    }
+
+    @ExperimentalStdlibApi
+    private fun RawDataReader.readNextSection(): Section {
+        val (sectionHeader, _) = sectionHeader()
+        val (section, _) = sectionByHeader(sectionHeader)
+        return section
     }
 }
