@@ -1,11 +1,14 @@
 package me.sbogolepov.wvm.parser
 
 import me.sbogolepov.wvm.io.*
+import me.sbogolepov.wvm.parser.generator.TypeSection
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 import kotlin.test.fail
 
 class Tests {
+    @ExperimentalStdlibApi
     @Test
     fun test() {
         val path = "/Users/jetbrains/src/wvm/src/commonTest/resources/trivial.wasm"
@@ -18,5 +21,8 @@ class Tests {
             assertEquals(WASM_MAGIC[idx], value)
         }
         assertEquals(1u,reader.wasmVersion())
+        val (sectionHeader, _) = reader.sectionHeader()
+        val (section, _) = reader.sectionByHeader(sectionHeader)
+        assertTrue { section is TypeSection }
     }
 }

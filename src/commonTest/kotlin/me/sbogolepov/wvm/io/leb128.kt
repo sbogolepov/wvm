@@ -15,7 +15,7 @@ class TestLeb128 {
         }
         val reader: RawDataReader = createRawDataReader(handle)
         val uLong = reader.readUnsignedLeb128()
-        assertEquals(624485uL, uLong)
+        assertEquals(624485uL, uLong.data)
     }
 
     @Test
@@ -27,6 +27,6 @@ class TestLeb128 {
         }
         val reader: RawDataReader = createRawDataReader(handle)
         val value = reader.readSignedLeb128()
-        assertEquals(-123456L, value)
+        assertEquals(-123456L, value.data)
     }
 }

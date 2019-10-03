@@ -1,7 +1,5 @@
 package me.sbogolepov.wvm.io
 
-import sun.misc.IOUtils
-import java.io.DataInputStream
 import java.io.File
 import java.io.FileInputStream
 import java.nio.ByteBuffer
@@ -64,5 +62,3 @@ class JvmRawDataReader(val file: File, override val endianness: Endianness) : Ra
         dataStream.double
 
 }
-
-    String(this, Charsets.UTF_8)

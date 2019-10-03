@@ -6,7 +6,7 @@ import me.sbogolepov.wvm.io.*
 import me.sbogolepov.wvm.parser.generator.*
 
 // TODO: Think about DSL for parsing
-data class ParseResult<T>(val data: T, val bytesRead: Int)
+data class ParseResult<out T>(val data: T, val bytesRead: Int)
 
 val WASM_MAGIC = byteArrayOf(0x00, 0x61, 0x73, 0x6d)
 
@@ -59,9 +59,10 @@ fun RawDataReader.sectionHeader(): ParseResult<SectionHeader> {
 }
 
 @ExperimentalStdlibApi
-fun RawDataReader.customSection(sectionHeader: SectionHeader): CustomSection {
+fun RawDataReader.customSection(sectionHeader: SectionHeader): ParseResult<CustomSection> {
     val (name, bytesRead) = name()
-    return CustomSection(name, readBytes(sectionHeader.sizeInBytes.toInt() - bytesRead))
+    val section = CustomSection(name, readBytes(sectionHeader.sizeInBytes.toInt() - bytesRead))
+    return ParseResult(section, sectionHeader.sizeInBytes.toInt())
 }
 
 @ExperimentalStdlibApi
@@ -70,29 +71,28 @@ fun RawDataReader.typeSection(sectionHeader: SectionHeader): ParseResult<TypeSec
     return ParseResult(TypeSection(functions), read)
 }
 
-fun RawDataReader.importSection(sectionHeader: SectionHeader): ImportSection {}
+fun RawDataReader.importSection(sectionHeader: SectionHeader): ParseResult<ImportSection> { TODO() }
 
-fun RawDataReader.functionSection(sectionHeader: SectionHeader): FunctionSection {}
+fun RawDataReader.functionSection(sectionHeader: SectionHeader): ParseResult<FunctionSection> { TODO() }
 
-fun RawDataReader.tableSection(sectionHeader: SectionHeader): TableSection {}
+fun RawDataReader.tableSection(sectionHeader: SectionHeader): ParseResult<TableSection> {TODO()}
 
-fun RawDataReader.memorySection(sectionHeader: SectionHeader): MemorySection {}
+fun RawDataReader.memorySection(sectionHeader: SectionHeader): ParseResult<MemorySection> {TODO()}
 
-fun RawDataReader.globalSection(sectionHeader: SectionHeader): GlobalSection {}
+fun RawDataReader.globalSection(sectionHeader: SectionHeader): ParseResult<GlobalSection> {TODO()}
 
-fun RawDataReader.exportSection(sectionHeader: SectionHeader): ExportSection {}
+fun RawDataReader.exportSection(sectionHeader: SectionHeader): ParseResult<ExportSection> {TODO()}
 
-fun RawDataReader.startSection(sectionHeader: SectionHeader): StartSection {}
+fun RawDataReader.startSection(sectionHeader: SectionHeader): ParseResult<StartSection> {TODO()}
 
-fun RawDataReader.elementSection(sectionHeader: SectionHeader): ElementSection {}
+fun RawDataReader.elementSection(sectionHeader: SectionHeader): ParseResult<ElementSection> {TODO()}
 
-fun RawDataReader.codeSection(sectionHeader: SectionHeader): CodeSection {}
+fun RawDataReader.codeSection(sectionHeader: SectionHeader): ParseResult<CodeSection> {TODO()}
 
-fun RawDataReader.dataSection(sectionHeader: SectionHeader): DataSection {}
-
+fun RawDataReader.dataSection(sectionHeader: SectionHeader): ParseResult<DataSection> {TODO()}
 
 @ExperimentalStdlibApi
-fun RawDataReader.sectionByHeader(sectionHeader: SectionHeader): Section =
+fun RawDataReader.sectionByHeader(sectionHeader: SectionHeader): ParseResult<Section> =
     when (sectionHeader.id.toInt()) {
         0 -> customSection(sectionHeader)
         1 -> typeSection(sectionHeader)
