@@ -172,7 +172,3 @@ val ParserGenerator.section get() = parser<Section> {
         else -> error("Unsupported section ID = ${header.id}")
     }
 }
-
-val ParserGenerator.expr get() = parser<Expression> {
-    TODO()
-}

@@ -1,6 +1,8 @@
 package me.sbogolepov.wvm.parser
 
 import me.sbogolepov.wvm.io.RawDataReader
+import me.sbogolepov.wvm.io.rawDataReaderFrom
+import me.sbogolepov.wvm.raw.Instruction
 import kotlin.experimental.and
 
 data class ParseResult<out T>(val data: T, val bytesRead: Int)
@@ -62,8 +64,23 @@ class ParserGenerator(val rawDataReader: RawDataReader) {
         val num = +u32
         Array(num.toInt()) { +element }
     }
-}
 
+    inline fun <reified T> parseWhile(
+        action: AParser<T>,
+        crossinline condition: (Byte) -> Boolean
+    ): Parser<List<T>> = parser {
+        val data = mutableListOf<T>()
+        while (!condition(peek())) {
+            data += (+action)
+        }
+        eat()
+        data.toList()
+    }
+
+    fun peek(): Byte = rawDataReader.peek()
+
+    fun eat(n: Int = 1) = repeat(n) { rawDataReader.readByte() }
+}
 
 interface Parser<T> {
 

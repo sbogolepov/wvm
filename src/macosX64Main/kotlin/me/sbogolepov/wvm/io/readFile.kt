@@ -29,9 +29,7 @@ class NativeRawDataReader(rawData: RawData, override val endianness: Endianness 
     private var offset: Long = 0L
 
     override fun readByte(): Byte {
-        val value: Byte = bytesStart[offset]
-        offset += 1
-        return value
+        return bytesStart[offset++]
     }
 
     override fun readUInt8(): UByte = readByte().toUByte()
@@ -59,6 +57,10 @@ class NativeRawDataReader(rawData: RawData, override val endianness: Endianness 
         }
         offset += n
         conversion(bytes)
+    }
+
+    override fun peek(): Byte {
+        return bytesStart[offset]
     }
 }
 

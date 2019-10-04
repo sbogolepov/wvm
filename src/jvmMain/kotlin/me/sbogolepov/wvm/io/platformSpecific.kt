@@ -33,7 +33,7 @@ actual fun createRawDataReader(handle: FileHandle, endianness: Endianness): RawD
 class JvmRawDataReader(val file: File, override val endianness: Endianness) : RawDataReader {
 
     private val stream = FileInputStream(file)
-    private val dataStream = ByteBuffer.wrap(stream.readBytes()).apply {
+    private val byteBuffer = ByteBuffer.wrap(stream.readBytes()).apply {
         order(when (endianness) {
             Endianness.LITTLE -> ByteOrder.LITTLE_ENDIAN
             Endianness.BIG -> ByteOrder.BIG_ENDIAN
@@ -43,22 +43,24 @@ class JvmRawDataReader(val file: File, override val endianness: Endianness) : Ra
     }
 
     override fun readByte(): Byte =
-        dataStream.get()
+        byteBuffer.get()
 
 
     override fun readUInt8(): UByte =
-        dataStream.get().toUByte()
+        byteBuffer.get().toUByte()
 
     override fun readUInt16(): UShort =
-        dataStream.short.toUShort()
+        byteBuffer.short.toUShort()
 
     override fun readUInt32(): UInt =
-        dataStream.int.toUInt()
+        byteBuffer.int.toUInt()
 
     override fun readFloat32(): Float =
-        dataStream.float
+        byteBuffer.float
 
     override fun readFloat64(): Double =
-        dataStream.double
+        byteBuffer.double
 
+    override fun peek(): Byte =
+        byteBuffer.get(byteBuffer.position())
 }
