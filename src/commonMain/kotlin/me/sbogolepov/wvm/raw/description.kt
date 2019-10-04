@@ -61,6 +61,12 @@ class Data(val memIdx: UInt, val offset: Expression, val init: ByteArray)
 
 class SectionHeader(val id: Byte, val sizeInBytes: UInt)
 
+class LocalEntry(val count: UInt, val type: ValueType)
+
+class FunctionBody(val locals: Array<LocalEntry>, val code: Expression)
+
+class CodeEntry(val size: UInt, val code: FunctionBody)
+
 sealed class Section
 class CustomSection(val name: String, val data: ByteArray) : Section()
 class TypeSection(val types: Array<FunctionType>) : Section()
@@ -72,6 +78,6 @@ class GlobalSection(val globals: Array<Global>) : Section()
 class ExportSection(val exports: Array<Export>) : Section()
 class StartSection(val start: UInt) : Section()
 class ElementSection(val elements: Array<Element>) : Section()
-class CodeSection() : Section()
+class CodeSection(val entries: Array<CodeEntry>) : Section()
 class DataSection(val data: Array<Data>) : Section()
 

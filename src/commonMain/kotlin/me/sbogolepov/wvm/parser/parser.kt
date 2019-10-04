@@ -87,6 +87,18 @@ val ParserGenerator.data get() = parser<Data> {
     Data(+u32, +expr, (+vector(byte)).toByteArray())
 }
 
+val ParserGenerator.localEntry get() = parser<LocalEntry> {
+    LocalEntry(+u32, +valueType)
+}
+
+val ParserGenerator.functionBody get() = parser<FunctionBody> {
+    FunctionBody(+vector(localEntry), +expr)
+}
+
+val ParserGenerator.codeEntry get() = parser<CodeEntry> {
+    CodeEntry(+u32, +functionBody)
+}
+
 val ParserGenerator.sectionHeader get() = parser<SectionHeader> {
     SectionHeader(+byte, +u32)
 }
@@ -135,7 +147,7 @@ val ParserGenerator.elementSection get() = parser<ElementSection> {
 }
 
 val ParserGenerator.codeSection get() = parser<CodeSection> {
-    CodeSection()
+    CodeSection(+vector(codeEntry))
 }
 
 val ParserGenerator.dataSection get() = parser<DataSection> {

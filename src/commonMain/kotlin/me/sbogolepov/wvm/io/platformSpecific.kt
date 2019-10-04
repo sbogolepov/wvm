@@ -13,6 +13,6 @@ enum class FileReadMode {
 
 expect fun openFile(path: String, readMode: FileReadMode): FileOpenResult
 
-expect fun printError(message: String): Unit
+expect fun printError(message: String)
 
 expect fun createRawDataReader(handle: FileHandle, endianness: Endianness = Endianness.LITTLE): RawDataReader
