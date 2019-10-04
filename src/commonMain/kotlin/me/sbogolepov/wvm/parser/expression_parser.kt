@@ -2,8 +2,13 @@ package me.sbogolepov.wvm.parser
 
 import me.sbogolepov.wvm.raw.*
 
+val ParserGenerator.expr get() = parser<Expression> {
+    ExpressionImpl(+instructions)
+}
+
 val ParserGenerator.instruction: AParser<Instruction> get() = parser {
     when ((+byte).toInt()) {
+        // Control
         0x00 -> Unreachable
         0x01 -> NOP
         0x02 -> +block
@@ -14,6 +19,19 @@ val ParserGenerator.instruction: AParser<Instruction> get() = parser {
         0x0e -> +brTable
         0x0f -> Return
         0x10 -> +call
+        0x11 -> +callIndirect
+
+        // Parametric
+        0x1A -> Drop
+        0x1B -> Select
+
+        // Variables
+        0x20 -> LocalGet(+u32)
+        0x21 -> LocalSet(+u32)
+        0x22 -> LocalTee(+u32)
+        0x23 -> GlobalGet(+u32)
+        0x24 -> GlobalSet(+u32)
+
         else -> error("Unsupported operation")
     }
 }

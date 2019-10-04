@@ -2,7 +2,7 @@ package me.sbogolepov.wvm.raw
 
 import me.sbogolepov.wvm.parser.generator.ValueType
 
-sealed class Instruction : Expression
+sealed class Instruction
 object Unreachable : Instruction()
 object NOP : Instruction()
 
@@ -22,3 +22,13 @@ class BrTable(val table: Array<UInt>, val default: UInt): Instruction()
 object Return: Instruction()
 class Call(val function: UInt): Instruction()
 class CallIndirect(val typeIdx: UInt): Instruction()
+
+object Drop : Instruction()
+object Select : Instruction()
+
+class LocalGet(val localIdx: UInt) : Instruction()
+class LocalSet(val localIdx: UInt) : Instruction()
+class LocalTee(val localIdx: UInt) : Instruction()
+class GlobalGet(val globalIdx: UInt) : Instruction()
+class GlobalSet(val globalIdx: UInt) : Instruction()
+
