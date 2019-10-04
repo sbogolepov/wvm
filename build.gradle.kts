@@ -49,3 +49,8 @@ kotlin {
         }
     }
 }
+
+kotlin.sourceSets.all {
+    languageSettings.useExperimentalAnnotation("kotlin.ExperimentalStdlibApi")
+    languageSettings.useExperimentalAnnotation("kotlin.ExperimentalUnsignedTypes")
+}

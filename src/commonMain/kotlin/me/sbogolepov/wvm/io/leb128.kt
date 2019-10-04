@@ -3,7 +3,6 @@ package me.sbogolepov.wvm.io
 import me.sbogolepov.wvm.parser.ParseResult
 import kotlin.experimental.and
 
-@ExperimentalUnsignedTypes
 fun RawDataReader.readUnsignedLeb128(): ParseResult<ULong> {
     var result = 0uL
     var shift = 0

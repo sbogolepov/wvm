@@ -1,5 +1,3 @@
-@file:Suppress("EXPERIMENTAL_API_USAGE")
-
 package me.sbogolepov.wvm.parser
 
 import me.sbogolepov.wvm.io.*
@@ -26,7 +24,6 @@ inline fun <reified T> RawDataReader.vector(element: RawDataReader.() -> ParseRe
     return ParseResult(data, read)
 }
 
-@ExperimentalStdlibApi
 fun RawDataReader.name(): ParseResult<String> {
     val (vector, read) = vector { byte() }
     return ParseResult(vector.toByteArray().decodeToString(), read)
@@ -88,7 +85,6 @@ fun RawDataReader.importDescription(): ParseResult<ImportDescription> {
     return ParseResult(importDesc, r1 + 1)
 }
 
-@ExperimentalStdlibApi
 fun RawDataReader.import(): ParseResult<Import> {
     val (module, r1) = name()
     val (name, r2) = name()
@@ -96,7 +92,6 @@ fun RawDataReader.import(): ParseResult<Import> {
     return ParseResult(Import(module, name, importDesc), r1 + r2 + r3)
 }
 
-@ExperimentalStdlibApi
 fun RawDataReader.functionType(): ParseResult<FunctionType> {
     check(readByte().toInt() == 0x60) { "Function type should start with 0x60 byte" }
     val (parameters, parametersBytes) = vector { valueType() }
@@ -111,20 +106,17 @@ fun RawDataReader.sectionHeader(): ParseResult<SectionHeader> {
     return ParseResult(SectionHeader(sectionId, sizeInBytes), r1 + r2)
 }
 
-@ExperimentalStdlibApi
 fun RawDataReader.customSection(sectionHeader: SectionHeader): ParseResult<CustomSection> {
     val (name, bytesRead) = name()
     val section = CustomSection(name, readBytes(sectionHeader.sizeInBytes.toInt() - bytesRead))
     return ParseResult(section, sectionHeader.sizeInBytes.toInt())
 }
 
-@ExperimentalStdlibApi
 fun RawDataReader.typeSection(sectionHeader: SectionHeader): ParseResult<TypeSection> {
     val (functions, read) = vector { functionType() }
     return ParseResult(TypeSection(functions), read)
 }
 
-@ExperimentalStdlibApi
 fun RawDataReader.importSection(sectionHeader: SectionHeader): ParseResult<ImportSection> {
     val (imports, read) = vector { import() }
     return ParseResult(ImportSection(imports), read)
@@ -148,7 +140,6 @@ fun RawDataReader.codeSection(sectionHeader: SectionHeader): ParseResult<CodeSec
 
 fun RawDataReader.dataSection(sectionHeader: SectionHeader): ParseResult<DataSection> {TODO()}
 
-@ExperimentalStdlibApi
 fun RawDataReader.sectionByHeader(sectionHeader: SectionHeader): ParseResult<Section> =
     when (sectionHeader.id.toInt()) {
         0 -> customSection(sectionHeader)
