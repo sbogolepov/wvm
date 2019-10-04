@@ -1,5 +1,6 @@
 package me.sbogolepov.wvm.io
 
+import me.sbogolepov.wvm.parser.ParserGenerator
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.fail
@@ -13,9 +14,9 @@ class TestLeb128 {
             is FileOpenResult.Error -> fail("IO failed: ${result.message}")
             is FileOpenResult.Ok -> result.handle
         }
-        val reader: RawDataReader = createRawDataReader(handle)
-        val uLong = reader.readUnsignedLeb128()
-        assertEquals(624485uL, uLong.data)
+        val parser = ParserGenerator(createRawDataReader(handle))
+        val uLong = parser.unsignedLeb128()
+        assertEquals(624485uL, uLong)
     }
 
     @Test
@@ -25,8 +26,8 @@ class TestLeb128 {
             is FileOpenResult.Error -> fail("IO failed: ${result.message}")
             is FileOpenResult.Ok -> result.handle
         }
-        val reader: RawDataReader = createRawDataReader(handle)
-        val value = reader.readSignedLeb128()
-        assertEquals(-123456L, value.data)
+        val parser = ParserGenerator(createRawDataReader(handle))
+        val value = parser.signedLeb128()
+        assertEquals(-123456L, value)
     }
 }

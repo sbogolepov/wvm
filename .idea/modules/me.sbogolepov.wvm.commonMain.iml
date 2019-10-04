@@ -2,7 +2,7 @@
 <module version="4">
   <component name="FacetManager">
     <facet type="kotlin-language" name="Kotlin">
-      <configuration version="3" platform="Common (experimental) " allPlatforms="JVM [1.6]/JS []/Native []" useProjectSettings="false" isTestModule="false" externalProjectId="wvm">
+      <configuration version="3" platform="Common (experimental) " allPlatforms="JVM [1.6]/Native []/JS []" useProjectSettings="false" isTestModule="false" externalProjectId="wvm">
         <newMppModelJpsModuleKind>SOURCE_SET_HOLDER</newMppModelJpsModuleKind>
         <compilerSettings>
           <option name="additionalArguments" value="-Xuse-experimental=kotlin.ExperimentalStdlibApi,kotlin.ExperimentalUnsignedTypes" />

@@ -1,6 +1,7 @@
 package me.sbogolepov.wvm.parser.generator
 
 import me.sbogolepov.wvm.raw.ConstantExpression
+import me.sbogolepov.wvm.raw.Expression
 
 
 enum class ValueType {
@@ -21,21 +22,20 @@ sealed class Result {
 
 class FunctionType(val parameters: Array<ValueType>, val results: Array<ValueType>)
 
-sealed class Limit(val min: UInt) {
-    class Open(min: UInt) : Limit(min)
-    class Closed(min: UInt, val max: UInt) : Limit(min)
+sealed class Limits(val min: UInt) {
+    class Open(min: UInt) : Limits(min)
+    class Closed(min: UInt, val max: UInt) : Limits(min)
 }
 
-class Memory(val limit: Limit)
+class Memory(val limits: Limits)
 
-// TODO: Rename to TableType?
-class Table(val elementType: ElementType, val limit: Limit) {
+class TableType(val elementType: ElementType, val limits: Limits) {
     enum class ElementType {
         FuncRef
     }
 }
 
-class Global(val value: Value, val mutable: Boolean)
+class Global(val type: GlobalType, val expression: Expression)
 
 class GlobalType(val valueType: ValueType, val mutable: Boolean)
 
@@ -43,9 +43,11 @@ class Import(val module: String, val name: String, val description: ImportDescri
 
 sealed class ImportDescription
 class FunctionImport(val typeIndex: UInt) : ImportDescription()
-class TableImport(val table: Table) : ImportDescription()
+class TableImport(val table: TableType) : ImportDescription()
 class MemoryImport(val memory: Memory) : ImportDescription()
 class GlobalImport(val globalType: GlobalType) : ImportDescription()
+
+class Export(val name: String, val description: ExportDescription)
 
 sealed class ExportDescription
 class FunctionExport(val typeIndex: UInt) : ExportDescription()
@@ -53,8 +55,9 @@ class TableExport(val tableIdx: UInt) : ExportDescription()
 class MemoryExport(val memoryIdx: UInt) : ExportDescription()
 class GlobalExport(val globalIdx: UInt) : ExportDescription()
 
-class ElementSegment(val tableIdx: UInt, val offset: ConstantExpression, val init: List<FunctionType>)
+class Element(val tableIdx: UInt, val offset: Expression, val init: Array<FunctionType>)
 
+class Data(val memIdx: UInt, val offset: Expression, val init: ByteArray)
 
 class SectionHeader(val id: Byte, val sizeInBytes: UInt)
 
@@ -63,12 +66,12 @@ class CustomSection(val name: String, val data: ByteArray) : Section()
 class TypeSection(val types: Array<FunctionType>) : Section()
 class ImportSection(val imports: Array<Import>) : Section()
 class FunctionSection(val typesIndices: Array<UInt>) : Section()
-class TableSection(val tables: Array<Table>) : Section()
+class TableSection(val tables: Array<TableType>) : Section()
 class MemorySection(val memories: Array<Memory>) : Section()
 class GlobalSection(val globals: Array<Global>) : Section()
-class ExportSection(val exports: Array<ExportDescription>) : Section()
+class ExportSection(val exports: Array<Export>) : Section()
 class StartSection(val start: UInt) : Section()
-class ElementSection() : Section()
+class ElementSection(val elements: Array<Element>) : Section()
 class CodeSection() : Section()
-class DataSection() : Section()
+class DataSection(val data: Array<Data>) : Section()
 

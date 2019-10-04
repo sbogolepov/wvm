@@ -2,9 +2,7 @@ package me.sbogolepov.wvm.parser
 
 import me.sbogolepov.wvm.io.*
 import me.sbogolepov.wvm.parser.generator.*
-
-// TODO: Think about DSL for parsing
-data class ParseResult<out T>(val data: T, val bytesRead: Int)
+import me.sbogolepov.wvm.raw.Expression
 
 val WASM_MAGIC = byteArrayOf(0x00, 0x61, 0x73, 0x6d)
 
@@ -12,147 +10,157 @@ fun RawDataReader.magic(): ByteArray = readBytes(4)
 
 fun RawDataReader.wasmVersion(): UInt = readUInt32()
 
-inline fun <reified T> RawDataReader.vector(element: RawDataReader.() -> ParseResult<T>): ParseResult<Array<T>> {
-    val (vectorSize, size) = u32()
-    var read = size
-    val data = Array(vectorSize.toInt()) {
-        element().let {
-            read += it.bytesRead
-            it.data
-        }
-    }
-    return ParseResult(data, read)
+val ParserGenerator.name get() = parser<String> {
+    val bytes = +vector(byte)
+    bytes.toByteArray().decodeToString()
 }
 
-fun RawDataReader.name(): ParseResult<String> {
-    val (vector, read) = vector { byte() }
-    return ParseResult(vector.toByteArray().decodeToString(), read)
-}
-
-fun RawDataReader.valueType(): ParseResult<ValueType> {
-    val type = when (val byte = readByte().toInt()) {
+val ParserGenerator.valueType get() = parser<ValueType> {
+    when (val byte = (+byte).toInt()) {
         0x7f -> ValueType.I32
         0x7e -> ValueType.I64
         0x7d -> ValueType.F32
         0x7c -> ValueType.F64
         else -> error("Unexpected value type: ${byte.toString(16)}")
     }
-    return ParseResult(type, 1)
 }
 
-fun RawDataReader.limits(): ParseResult<Limit> {
-    return if (readByte().toInt() == 0) {
-        val (min, r0) = u32()
-        ParseResult(Limit.Open(min), r0 + 1)
+val ParserGenerator.limits get() = parser<Limits> {
+    if (+byte == 0.toByte()) {
+        Limits.Open(+u32)
     } else {
-        val (min, r0) = u32()
-        val (max, r1) = u32()
-        ParseResult(Limit.Closed(min, max), r0 + r1 + 1)
+        Limits.Closed(+u32, +u32)
     }
 }
 
-fun RawDataReader.tableType(): ParseResult<Table> {
-    check(readByte().toInt() == 0x70) { "Only FuncRef types are supported" }
-    val (limits, r0) = limits()
-    return ParseResult(Table(Table.ElementType.FuncRef, limits), r0+1)
+val ParserGenerator.tableType get() = parser<TableType> {
+    check(+byte == 0x70.toByte()) { "Only FuncRef types are supported" }
+    TableType(TableType.ElementType.FuncRef, +limits)
 }
 
-fun RawDataReader.globalType(): ParseResult<GlobalType> {
-    val (valueType, r0) = valueType()
-    return ParseResult(GlobalType(valueType, readByte().toInt() == 0), r0 + 1)
+val ParserGenerator.globalType get() = parser<GlobalType> {
+    GlobalType(+valueType, +byte == 0.toByte())
 }
 
-fun RawDataReader.importDescription(): ParseResult<ImportDescription> {
-    val (importDesc, r1) = when (val byte = readByte().toInt()) {
-        0x00 -> {
-            val (typeIdx, r0) = u32()
-            FunctionImport(typeIdx) to r0
-        }
-        0x01 -> {
-           val (tableType, r0) = tableType()
-            TableImport(tableType) to r0
-        }
-        0x02 -> {
-            val (limits, r0) = limits()
-            MemoryImport(Memory(limits)) to r0
-        }
-        0x03 -> {
-            val (globalType, r0) = globalType()
-            GlobalImport(globalType) to r0
-        }
+val ParserGenerator.importDescription get() = parser<ImportDescription> {
+    when (val byte = (+byte).toInt()) {
+        0x00 -> FunctionImport(+u32)
+        0x01 -> TableImport(+tableType)
+        0x02 -> MemoryImport(Memory(+limits))
+        0x03 -> GlobalImport(+globalType)
         else -> error("Unexpected import description: ${byte.toString(16)}")
     }
-    return ParseResult(importDesc, r1 + 1)
 }
 
-fun RawDataReader.import(): ParseResult<Import> {
-    val (module, r1) = name()
-    val (name, r2) = name()
-    val (importDesc, r3) = importDescription()
-    return ParseResult(Import(module, name, importDesc), r1 + r2 + r3)
+val ParserGenerator.import get() = parser<Import> {
+    Import(+name, +name, +importDescription)
 }
 
-fun RawDataReader.functionType(): ParseResult<FunctionType> {
-    check(readByte().toInt() == 0x60) { "Function type should start with 0x60 byte" }
-    val (parameters, parametersBytes) = vector { valueType() }
-    val (returns, returnsBytes) = vector { valueType() }
-    val read = 1 + parametersBytes + returnsBytes
-    return ParseResult(FunctionType(parameters, returns), read)
-}
-
-fun RawDataReader.sectionHeader(): ParseResult<SectionHeader> {
-    val (sectionId, r1) = byte()
-    val (sizeInBytes, r2) = u32()
-    return ParseResult(SectionHeader(sectionId, sizeInBytes), r1 + r2)
-}
-
-fun RawDataReader.customSection(sectionHeader: SectionHeader): ParseResult<CustomSection> {
-    val (name, bytesRead) = name()
-    val section = CustomSection(name, readBytes(sectionHeader.sizeInBytes.toInt() - bytesRead))
-    return ParseResult(section, sectionHeader.sizeInBytes.toInt())
-}
-
-fun RawDataReader.typeSection(sectionHeader: SectionHeader): ParseResult<TypeSection> {
-    val (functions, read) = vector { functionType() }
-    return ParseResult(TypeSection(functions), read)
-}
-
-fun RawDataReader.importSection(sectionHeader: SectionHeader): ParseResult<ImportSection> {
-    val (imports, read) = vector { import() }
-    return ParseResult(ImportSection(imports), read)
-}
-
-fun RawDataReader.functionSection(sectionHeader: SectionHeader): ParseResult<FunctionSection> { TODO() }
-
-fun RawDataReader.tableSection(sectionHeader: SectionHeader): ParseResult<TableSection> {TODO()}
-
-fun RawDataReader.memorySection(sectionHeader: SectionHeader): ParseResult<MemorySection> {TODO()}
-
-fun RawDataReader.globalSection(sectionHeader: SectionHeader): ParseResult<GlobalSection> {TODO()}
-
-fun RawDataReader.exportSection(sectionHeader: SectionHeader): ParseResult<ExportSection> {TODO()}
-
-fun RawDataReader.startSection(sectionHeader: SectionHeader): ParseResult<StartSection> {TODO()}
-
-fun RawDataReader.elementSection(sectionHeader: SectionHeader): ParseResult<ElementSection> {TODO()}
-
-fun RawDataReader.codeSection(sectionHeader: SectionHeader): ParseResult<CodeSection> {TODO()}
-
-fun RawDataReader.dataSection(sectionHeader: SectionHeader): ParseResult<DataSection> {TODO()}
-
-fun RawDataReader.sectionByHeader(sectionHeader: SectionHeader): ParseResult<Section> =
-    when (sectionHeader.id.toInt()) {
-        0 -> customSection(sectionHeader)
-        1 -> typeSection(sectionHeader)
-        2 -> importSection(sectionHeader)
-        3 -> functionSection(sectionHeader)
-        4 -> tableSection(sectionHeader)
-        5 -> memorySection(sectionHeader)
-        6 -> globalSection(sectionHeader)
-        7 -> exportSection(sectionHeader)
-        8 -> startSection(sectionHeader)
-        9 -> elementSection(sectionHeader)
-        10 -> codeSection(sectionHeader)
-        11 -> dataSection(sectionHeader)
-        else -> error("Unsupported section ID = ${sectionHeader.id}")
+val ParserGenerator.exportDescription get() = parser<ExportDescription> {
+    when (val byte = (+byte).toInt()) {
+        0x00 -> FunctionExport(+u32)
+        0x01 -> TableExport(+u32)
+        0x02 -> MemoryExport(+u32)
+        0x03 -> GlobalExport(+u32)
+        else -> error("Unexpected import description: ${byte.toString(16)}")
     }
+}
+
+val ParserGenerator.export get() = parser<Export> {
+    Export(+name, +exportDescription)
+}
+
+val ParserGenerator.functionType get() = parser<FunctionType> {
+    check(+byte == 0x60.toByte()) { "Function type should start with 0x60 byte" }
+    FunctionType(+vector(valueType), +vector(valueType))
+}
+
+val ParserGenerator.global get() = parser<Global> {
+    Global(+globalType, +expr)
+}
+
+val ParserGenerator.element get() = parser<Element> {
+    Element(+u32, +expr, +vector(functionType))
+}
+
+val ParserGenerator.data get() = parser<Data> {
+    Data(+u32, +expr, (+vector(byte)).toByteArray())
+}
+
+val ParserGenerator.sectionHeader get() = parser<SectionHeader> {
+    SectionHeader(+byte, +u32)
+}
+
+fun ParserGenerator.customSection(sectionSize: Int) = parser<CustomSection> {
+    val name = +name
+    val bytesInSection = sectionSize - bytesRead
+    val bytes: List<Byte> = (0..bytesInSection).map { +byte }
+    CustomSection(name, bytes.toByteArray())
+}
+
+val ParserGenerator.typeSection get() = parser<TypeSection> {
+    TypeSection(+vector(functionType))
+}
+
+val ParserGenerator.importSection get() = parser<ImportSection> {
+    ImportSection(+vector(import))
+}
+
+val ParserGenerator.functionSection get() = parser<FunctionSection> {
+    FunctionSection(+vector(u32))
+}
+
+val ParserGenerator.tableSection get() = parser<TableSection> {
+    TableSection(+vector(tableType))
+}
+
+val ParserGenerator.memorySection get() = parser<MemorySection> {
+    MemorySection((+vector(limits)).map { Memory(it) }.toTypedArray())
+}
+
+val ParserGenerator.globalSection get() = parser<GlobalSection> {
+    GlobalSection(+vector(global))
+}
+
+val ParserGenerator.exportSection get() = parser<ExportSection> {
+    ExportSection(+vector(export))
+}
+
+val ParserGenerator.startSection get() = parser<StartSection> {
+    StartSection(+u32)
+}
+
+val ParserGenerator.elementSection get() = parser<ElementSection> {
+    ElementSection(+vector(element))
+}
+
+val ParserGenerator.codeSection get() = parser<CodeSection> {
+    CodeSection()
+}
+
+val ParserGenerator.dataSection get() = parser<DataSection> {
+    DataSection(+vector(data))
+}
+
+val ParserGenerator.section get() = parser<Section> {
+    val header = +sectionHeader
+    +when (header.id.toInt()) {
+        0 -> customSection(header.sizeInBytes.toInt())
+        1 -> typeSection
+        2 -> importSection
+        3 -> functionSection
+        4 -> tableSection
+        5 -> memorySection
+        6 -> globalSection
+        7 -> exportSection
+        8 -> startSection
+        9 -> elementSection
+        10 -> codeSection
+        11 -> dataSection
+        else -> error("Unsupported section ID = ${header.id}")
+    }
+}
+
+val ParserGenerator.expr get() = parser<Expression> {
+    TODO()
+}

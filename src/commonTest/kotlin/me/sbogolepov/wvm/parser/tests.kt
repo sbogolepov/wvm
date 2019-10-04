@@ -8,7 +8,6 @@ import kotlin.test.assertTrue
 import kotlin.test.fail
 
 class Tests {
-    @ExperimentalStdlibApi
     @Test
     fun test() {
         val path = "/Users/jetbrains/src/wvm/src/commonTest/resources/trivial.wasm"
@@ -21,13 +20,17 @@ class Tests {
             assertEquals(WASM_MAGIC[idx], value)
         }
         assertEquals(1u,reader.wasmVersion())
-        val section = reader.readNextSection()
+
+        val parser = ParserGenerator(reader)
+
+        val section = parser.section()
         assertTrue { section is TypeSection }
         val typeSection = section as TypeSection
         assertEquals(1, typeSection.types.size)
         assertEquals(1, typeSection.types[0].results.size)
         assertEquals(ValueType.I32, typeSection.types[0].results[0])
-        val importSection = reader.readNextSection()
+
+        val importSection = parser.section()
         assertTrue(importSection is ImportSection)
         assertTrue(importSection.imports.size == 2)
         val import = importSection.imports[0]
@@ -35,13 +38,6 @@ class Tests {
         assertTrue(description is MemoryImport)
         assertEquals("env", import.module)
         assertEquals("__linear_memory", import.name)
-        assertTrue(description.memory.limit is Limit.Open)
-    }
-
-    @ExperimentalStdlibApi
-    private fun RawDataReader.readNextSection(): Section {
-        val (sectionHeader, _) = sectionHeader()
-        val (section, _) = sectionByHeader(sectionHeader)
-        return section
+        assertTrue(description.memory.limits is Limits.Open)
     }
 }
