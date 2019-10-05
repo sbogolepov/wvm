@@ -42,51 +42,45 @@ fun generateMemoryOperations(): List<String> {
     return classes.toList()
 }
 
-fun generateIntegralCmpInsns(type: String): List<String> {
+fun generateIntegralCmpInsns(): List<String> {
     val ops = listOf("Eqz", "Eq", "Ne", "Lts", "Ltu", "Gts", "Gtu", "Les", "Leu", "Ges", "Geu")
-    return ops.map { "$type$it" }
+    return listOf("I32", "I64").flatMap { type -> ops.map { "$type$it" } }
+}
+
+fun generateFloatCmpInsns(): List<String> {
+    val ops = listOf("Eq", "Ne", "Lt", "Gt", "Le", "Ge")
+    return listOf("F32", "F64").flatMap { type -> ops.map { "$type$it" } }
+}
+
+fun generateParsingSwitch(
+    range: IntRange,
+    operations: List<String>,
+    operationGenFn: (String) -> String
+): List<String> {
+    val body = mutableListOf<String>()
+    val opBytes = range.toList()
+    operations.forEachIndexed { index, op ->
+        body += "0x${opBytes[index].toString(16)} -> ${operationGenFn(op)}"
+    }
+    body += "else -> error(\"\")"
+    return body
 }
 
 fun generateIntegralCmpClasses(): List<String> =
-    listOf("I32", "I64").flatMap { generateIntegralCmpInsns(it) }.map { "class $it() : Instruction()" }
+    generateIntegralCmpInsns().map { "class $it() : Instruction()" }
 
-fun generateIntegralCmpParser(): List<String> {
-    val names = listOf("I32", "I64").flatMap { generateIntegralCmpInsns(it) }
-    val body = mutableListOf<String>()
-    val opBytes = integralCmpInsnRange.toList()
-    names.forEachIndexed { index, op ->
-        body += "0x${opBytes[index].toString(16)} -> $op()"
-    }
-    return body
-}
-
-fun generateFloatCmpInsns(type: String): List<String> {
-    val ops = listOf("Eq", "Ne", "Lt", "Gt", "Le", "Ge")
-    return ops.map { "$type$it" }
-}
+fun generateIntegralCmpParser(): List<String> =
+    generateParsingSwitch(integralCmpInsnRange, generateIntegralCmpInsns()) { "$it()" }
 
 fun generateFloatCmpClasses(): List<String> =
-    listOf("F32", "F64").flatMap { generateFloatCmpInsns(it) }.map { "class $it() : Instruction()" }
+    generateFloatCmpInsns().map { "class $it() : Instruction()" }
 
-fun generateFloatCmpParser(): List<String> {
-    val names = listOf("F32", "F64").flatMap { generateFloatCmpInsns(it) }
-    val body = mutableListOf<String>()
-    val opBytes = floatCmpInsnsRange.toList()
-    names.forEachIndexed { index, op ->
-        body += "0x${opBytes[index].toString(16)} -> $op()"
-    }
-    return body
-}
+fun generateFloatCmpParser(): List<String> =
+    generateParsingSwitch(floatCmpInsnsRange, generateFloatCmpInsns()) { "$it()" }
+
 
 fun generateMemOpClasses(): List<String> =
     generateMemoryOperations().map(::generateClassFromMemInsnName)
 
-fun generateMemOpParser(): List<String> {
-    val names = generateMemoryOperations()
-    val body = mutableListOf<String>()
-    val opBytes = memInsnRange.toList()
-    names.forEachIndexed { index, op ->
-        body += "0x${opBytes[index].toString(16)} -> $op(+memArg)"
-    }
-    return body
-}
+fun generateMemOpParser(): List<String> =
+    generateParsingSwitch(memInsnRange, generateMemoryOperations()) {"$it(+memArg)" }
