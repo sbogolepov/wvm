@@ -7,7 +7,7 @@ val ParserGenerator.expr get() = parser<Expression> {
 }
 
 val ParserGenerator.instruction: AParser<Instruction> get() = parser {
-    when ((+byte).toInt()) {
+    when (val byte = (+byte).toInt()) {
         // Control
         0x00 -> Unreachable
         0x01 -> NOP
@@ -32,8 +32,46 @@ val ParserGenerator.instruction: AParser<Instruction> get() = parser {
         0x23 -> GlobalGet(+u32)
         0x24 -> GlobalSet(+u32)
 
-        else -> error("Unsupported operation")
+        // Memory
+        in memInsnRange -> +memoryInstruction(byte)
+
+        else -> error("Unsupported operation ${byte.toString(16)}")
     }
+}
+
+fun ParserGenerator.memoryInstruction(byte: Int): AParser<Instruction> = parser {
+    when (byte) {
+        0x28 -> I32Load(+memArg)
+        0x29 -> I64Load(+memArg)
+        0x2a -> F32Load(+memArg)
+        0x2b -> F64Load(+memArg)
+        0x2c -> I32Load8s(+memArg)
+        0x2d -> I32Load8u(+memArg)
+        0x2e -> I32Load16s(+memArg)
+        0x2f -> I32Load16u(+memArg)
+        0x30 -> I64Load8s(+memArg)
+        0x31 -> I64Load8u(+memArg)
+        0x32 -> I64Load16s(+memArg)
+        0x33 -> I64Load16u(+memArg)
+        0x34 -> I64Load32s(+memArg)
+        0x35 -> I64Load32u(+memArg)
+        0x36 -> I32Store(+memArg)
+        0x37 -> I64Store(+memArg)
+        0x38 -> F32Store(+memArg)
+        0x39 -> F64Store(+memArg)
+        0x3a -> I32Store8(+memArg)
+        0x3b -> I32Store16(+memArg)
+        0x3c -> I64Store8(+memArg)
+        0x3d -> I64Store16(+memArg)
+        0x3e -> I64Store32(+memArg)
+        0x3F -> MemorySize
+        0x40 -> MemoryGrow
+        else -> error("Unsupported memory instruction ${byte.toString(16)}")
+    }
+}
+
+val ParserGenerator.memArg get() = parser<MemArg> {
+    MemArg(+u32, +u32)
 }
 
 val ParserGenerator.call get() = parser<Call> {
