@@ -45,7 +45,121 @@ val ParserGenerator.instruction: AParser<Instruction> get() = parser {
 
         in floatCmpInsnsRange -> +floatCmp(byte)
 
+        in integralMathRange -> +integralMath(byte)
+
+        in floatMathRange -> +floatMath(byte)
+
+        in conversionsRange -> +conversion(byte)
+
         else -> error("Unsupported operation ${byte.toString(16)}")
+    }
+}
+
+fun ParserGenerator.conversion(byte: Int) = parser<Instruction> {
+    when (byte) {
+        0xa7 -> I32WrapI64
+        0xa8 -> I32TruncF32s
+        0xa9 -> I32TruncF32u
+        0xaa -> I32TruncF64s
+        0xab -> I32TruncF64u
+        0xac -> I64ExtendI32s
+        0xad -> I64ExtendI32u
+        0xae -> I64TruncF32s
+        0xaf -> I64TruncF32u
+        0xb0 -> I64TruncF64s
+        0xb1 -> I64TruncF64u
+        0xb2 -> F32ConvertI32s
+        0xb3 -> F32ConvertI32u
+        0xb4 -> F32ConvertI64s
+        0xb5 -> F32ConvertI64u
+        0xb6 -> F32DemoteF64
+        0xb7 -> F64ConvertI32s
+        0xb8 -> F64ConvertI32u
+        0xb9 -> F64ConvertI64s
+        0xba -> F64ConvertI64u
+        0xbb -> F64PromoteF64
+        0xbc -> I32ReinterpretF32
+        0xbd -> I64ReinterpretF64
+        0xbe -> F32ReinterpretI32
+        0xbf -> F64ReinterpretI64
+        else -> error("")
+    }
+}
+
+fun ParserGenerator.floatMath(byte: Int) = parser<Instruction> {
+    when (byte) {
+        0x8b -> F32Abs()
+        0x8c -> F32Neg()
+        0x8d -> F32Ceil()
+        0x8e -> F32Floor()
+        0x8f -> F32Trunc()
+        0x90 -> F32Nearest()
+        0x91 -> F32Sqrt()
+        0x92 -> F32Add()
+        0x93 -> F32Sub()
+        0x94 -> F32Mul()
+        0x95 -> F32Div()
+        0x96 -> F32Min()
+        0x97 -> F32Max()
+        0x98 -> F32Copysign()
+        0x99 -> F64Abs()
+        0x9a -> F64Neg()
+        0x9b -> F64Ceil()
+        0x9c -> F64Floor()
+        0x9d -> F64Trunc()
+        0x9e -> F64Nearest()
+        0x9f -> F64Sqrt()
+        0xa0 -> F64Add()
+        0xa1 -> F64Sub()
+        0xa2 -> F64Mul()
+        0xa3 -> F64Div()
+        0xa4 -> F64Min()
+        0xa5 -> F64Max()
+        0xa6 -> F64Copysign()
+        else -> error("")
+
+    }
+}
+
+fun ParserGenerator.integralMath(byte: Int) = parser<Instruction> {
+    when (byte) {
+        0x67 -> I32Clz()
+        0x68 -> I32Ctz()
+        0x69 -> I32Popcnt()
+        0x6a -> I32Add()
+        0x6b -> I32Sub()
+        0x6c -> I32Mul()
+        0x6d -> I32Divs()
+        0x6e -> I32Divu()
+        0x6f -> I32Rems()
+        0x70 -> I32Remu()
+        0x71 -> I32And()
+        0x72 -> I32Or()
+        0x73 -> I32Xor()
+        0x74 -> I32Shl()
+        0x75 -> I32Shrs()
+        0x76 -> I32Shru()
+        0x77 -> I32Rotl()
+        0x78 -> I32Rotr()
+        0x79 -> I64Clz()
+        0x7a -> I64Ctz()
+        0x7b -> I64Popcnt()
+        0x7c -> I64Add()
+        0x7d -> I64Sub()
+        0x7e -> I64Mul()
+        0x7f -> I64Divs()
+        0x80 -> I64Divu()
+        0x81 -> I64Rems()
+        0x82 -> I64Remu()
+        0x83 -> I64And()
+        0x84 -> I64Or()
+        0x85 -> I64Xor()
+        0x86 -> I64Shl()
+        0x87 -> I64Shrs()
+        0x88 -> I64Shru()
+        0x89 -> I64Rotl()
+        0x8a -> I64Rotr()
+        else -> error("")
     }
 }
 
