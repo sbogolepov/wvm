@@ -58,6 +58,18 @@ class ParserGenerator(val rawDataReader: RawDataReader) {
         (+unsignedLeb128).toUInt()
     }
 
+    val i32 = parser<Int> {
+        (+signedLeb128).toInt()
+    }
+
+    val i64 = parser<Long> {
+        +signedLeb128
+    }
+
+    val f32 = rawDataReader.float
+
+    val f64 = rawDataReader.double
+
     val byte: Parser<Byte> = rawDataReader.byte
 
     inline fun <reified T> vector(element: Parser<T>) = parser<Array<T>> {
@@ -105,4 +117,9 @@ val RawDataReader.byte: Parser<Byte>
 val RawDataReader.float: Parser<Float>
     get() = object : Parser<Float> {
         override fun result() = ParseResult(readFloat32(), 4)
+    }
+
+val RawDataReader.double: Parser<Double>
+    get() = object : Parser<Double> {
+        override fun result() = ParseResult(readFloat64(), 8)
     }

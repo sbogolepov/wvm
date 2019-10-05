@@ -35,7 +35,63 @@ val ParserGenerator.instruction: AParser<Instruction> get() = parser {
         // Memory
         in memInsnRange -> +memoryInstruction(byte)
 
+        // Constant
+        0x41 -> I32Const(+i32)
+        0x42 -> I64Const(+i64)
+        0x43 -> F32Const(+f32)
+        0x44 -> F64Const(+f64)
+
+        in integralCmpInsnRange -> +integralCmp(byte)
+
+        in floatCmpInsnsRange -> +floatCmp(byte)
+
         else -> error("Unsupported operation ${byte.toString(16)}")
+    }
+}
+
+fun ParserGenerator.floatCmp(byte: Int): AParser<Instruction> = parser {
+    when (byte) {
+        0x5b -> F32Eq()
+        0x5c -> F32Ne()
+        0x5d -> F32Lt()
+        0x5e -> F32Gt()
+        0x5f -> F32Le()
+        0x60 -> F32Ge()
+        0x61 -> F64Eq()
+        0x62 -> F64Ne()
+        0x63 -> F64Lt()
+        0x64 -> F64Gt()
+        0x65 -> F64Le()
+        0x66 -> F64Ge()
+        else -> error("")
+    }
+}
+
+fun ParserGenerator.integralCmp(byte: Int): AParser<Instruction> = parser {
+    when (byte) {
+        0x45 -> I32Eqz()
+        0x46 -> I32Eq()
+        0x47 -> I32Ne()
+        0x48 -> I32Lts()
+        0x49 -> I32Ltu()
+        0x4a -> I32Gts()
+        0x4b -> I32Gtu()
+        0x4c -> I32Les()
+        0x4d -> I32Leu()
+        0x4e -> I32Ges()
+        0x4f -> I32Geu()
+        0x50 -> I64Eqz()
+        0x51 -> I64Eq()
+        0x52 -> I64Ne()
+        0x53 -> I64Lts()
+        0x54 -> I64Ltu()
+        0x55 -> I64Gts()
+        0x56 -> I64Gtu()
+        0x57 -> I64Les()
+        0x58 -> I64Leu()
+        0x59 -> I64Ges()
+        0x5a -> I64Geu()
+        else -> error("")
     }
 }
 
@@ -64,8 +120,8 @@ fun ParserGenerator.memoryInstruction(byte: Int): AParser<Instruction> = parser 
         0x3c -> I64Store8(+memArg)
         0x3d -> I64Store16(+memArg)
         0x3e -> I64Store32(+memArg)
-        0x3F -> MemorySize
-        0x40 -> MemoryGrow
+        0x3F -> MemorySize.also { eat() }
+        0x40 -> MemoryGrow.also { eat() }
         else -> error("Unsupported memory instruction ${byte.toString(16)}")
     }
 }
