@@ -2,7 +2,6 @@ package me.sbogolepov.wvm.parser
 
 import me.sbogolepov.wvm.io.*
 import me.sbogolepov.wvm.parser.generator.*
-import me.sbogolepov.wvm.raw.Expression
 
 val WASM_MAGIC = byteArrayOf(0x00, 0x61, 0x73, 0x6d)
 
@@ -62,7 +61,7 @@ val ParserGenerator.exportDescription get() = parser<ExportDescription> {
         0x01 -> TableExport(+u32)
         0x02 -> MemoryExport(+u32)
         0x03 -> GlobalExport(+u32)
-        else -> error("Unexpected import description: ${byte.toString(16)}")
+        else -> error("Unexpected export description: ${byte.toString(16)}")
     }
 }
 
@@ -171,4 +170,11 @@ val ParserGenerator.section get() = parser<Section> {
         11 -> dataSection
         else -> error("Unsupported section ID = ${header.id}")
     }
+}
+
+val ParserGenerator.module get() = parser<Module> {
+    val magic = rawDataReader.magic()
+    val version = rawDataReader.wasmVersion()
+    val sections = +parseWhile(section) { it != null }
+    Module(sections.toTypedArray())
 }

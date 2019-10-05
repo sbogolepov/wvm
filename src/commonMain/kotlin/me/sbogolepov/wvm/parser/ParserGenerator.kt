@@ -1,20 +1,26 @@
 package me.sbogolepov.wvm.parser
 
 import me.sbogolepov.wvm.io.RawDataReader
-import me.sbogolepov.wvm.io.rawDataReaderFrom
-import me.sbogolepov.wvm.raw.Instruction
 import kotlin.experimental.and
 
 data class ParseResult<out T>(val data: T, val bytesRead: Int)
 
-abstract class AParser<T> : Parser<T>, ByteCountingParser {
+// TODO: What if parser is called several times?
+abstract class AParser<T> : Parser<T> {
 
-    override var bytesRead = 0
+    var bytesRead = 0
+        private set
 
     abstract operator fun invoke(): T
 
     override fun result(): ParseResult<T> {
         return ParseResult(invoke(), bytesRead)
+    }
+
+    operator fun <G> Parser<G>.unaryPlus(): G {
+        val (data, bytesRead1) = this.result()
+        bytesRead += bytesRead1
+        return data
     }
 }
 
@@ -26,7 +32,7 @@ inline fun <reified T> parser(crossinline fn: AParser<T>.() -> T): AParser<T> = 
 
 class ParserGenerator(val rawDataReader: RawDataReader) {
 
-    val unsignedLeb128 = parser<ULong> {
+    val unsignedLeb128 get() = parser<ULong> {
         var result = 0uL
         var shift = 0
         do {
@@ -38,7 +44,7 @@ class ParserGenerator(val rawDataReader: RawDataReader) {
         result
     }
 
-    val signedLeb128 = parser<Long> {
+    val signedLeb128 get() = parser<Long> {
         var result = 0L
         var shift = 0
         var byte: Byte
@@ -54,23 +60,23 @@ class ParserGenerator(val rawDataReader: RawDataReader) {
         result
     }
 
-    val u32 = parser<UInt> {
+    val u32 get() = parser<UInt> {
         (+unsignedLeb128).toUInt()
     }
 
-    val i32 = parser<Int> {
+    val i32 get() = parser<Int> {
         (+signedLeb128).toInt()
     }
 
-    val i64 = parser<Long> {
+    val i64 get() = parser<Long> {
         +signedLeb128
     }
 
-    val f32 = rawDataReader.float
+    val f32 get() = rawDataReader.float
 
-    val f64 = rawDataReader.double
+    val f64 get() = rawDataReader.double
 
-    val byte: Parser<Byte> = rawDataReader.byte
+    val byte get() = rawDataReader.byte
 
     inline fun <reified T> vector(element: Parser<T>) = parser<Array<T>> {
         val num = +u32
@@ -79,17 +85,17 @@ class ParserGenerator(val rawDataReader: RawDataReader) {
 
     inline fun <reified T> parseWhile(
         action: AParser<T>,
-        crossinline condition: (Byte) -> Boolean
+        crossinline condition: (Byte?) -> Boolean
     ): Parser<List<T>> = parser {
         val data = mutableListOf<T>()
-        while (!condition(peek())) {
+        while (condition(peek())) {
             data += (+action)
         }
         eat()
         data.toList()
     }
 
-    fun peek(): Byte = rawDataReader.peek()
+    fun peek(): Byte? = rawDataReader.peek()
 
     fun eat(n: Int = 1) = repeat(n) { rawDataReader.readByte() }
 }
@@ -97,16 +103,6 @@ class ParserGenerator(val rawDataReader: RawDataReader) {
 interface Parser<T> {
 
     fun result(): ParseResult<T>
-}
-
-interface ByteCountingParser {
-    var bytesRead: Int
-
-    operator fun <G> Parser<G>.unaryPlus(): G {
-        val (data, bytesRead1) = this.result()
-        bytesRead += bytesRead1
-        return data
-    }
 }
 
 val RawDataReader.byte: Parser<Byte>

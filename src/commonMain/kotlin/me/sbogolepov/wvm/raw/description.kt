@@ -81,3 +81,6 @@ class ElementSection(val elements: Array<Element>) : Section()
 class CodeSection(val entries: Array<CodeEntry>) : Section()
 class DataSection(val data: Array<Data>) : Section()
 
+class Module(
+    val sections: Array<Section>
+)

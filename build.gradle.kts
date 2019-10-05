@@ -44,7 +44,7 @@ kotlin {
     macosX64 {
         binaries {
             executable("wvm-nm") {
-                entryPoint = "main"
+                entryPoint = "me.sbogolepov.wvm.tools.nm.main"
             }
         }
     }

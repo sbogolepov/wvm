@@ -61,6 +61,7 @@ class JvmRawDataReader(val file: File, override val endianness: Endianness) : Ra
     override fun readFloat64(): Double =
         byteBuffer.double
 
-    override fun peek(): Byte =
-        byteBuffer.get(byteBuffer.position())
+    override fun peek(): Byte {
+        return byteBuffer.get(byteBuffer.position())
+    }
 }

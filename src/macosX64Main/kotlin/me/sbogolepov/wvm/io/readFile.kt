@@ -22,7 +22,7 @@ actual class RawData(val nsData: NSData)
 
 @ExperimentalUnsignedTypes
 // TODO: Not only file endianness matters, but also system's.
-class NativeRawDataReader(rawData: RawData, override val endianness: Endianness = Endianness.LITTLE) : RawDataReader {
+class NativeRawDataReader(val rawData: RawData, override val endianness: Endianness = Endianness.LITTLE) : RawDataReader {
 
     private val bytesStart: CPointer<ByteVar> = rawData.nsData.bytes as CPointer<ByteVar>
 
@@ -59,7 +59,10 @@ class NativeRawDataReader(rawData: RawData, override val endianness: Endianness 
         conversion(bytes)
     }
 
-    override fun peek(): Byte {
+    override fun peek(): Byte? {
+        if (offset >= rawData.nsData.length.toLong()) {
+            return null
+        }
         return bytesStart[offset]
     }
 }
