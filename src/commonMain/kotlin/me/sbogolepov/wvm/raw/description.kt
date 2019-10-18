@@ -8,16 +8,18 @@ enum class ValueType {
     I32, I64, F32, F64
 }
 
-sealed class Value {
-    class I32(value: Int): Value()
-    class I64(value: Long): Value()
-    class F32(value: Float): Value()
-    class F64(value: Double): Value()
+sealed class Value<T> {
+    abstract val value: T
+
+    class I32(override val value: Int): Value<Int>()
+    class I64(override val value: Long): Value<Long>()
+    class F32(override val value: Float): Value<Float>()
+    class F64(override val value: Double): Value<Double>()
 }
 
 sealed class Result {
     object Empty : Result()
-    class ValueResult(value: Value) : Result()
+    class ValueResult(value: Value<*>) : Result()
 }
 
 class FunctionType(val parameters: Array<ValueType>, val results: Array<ValueType>)

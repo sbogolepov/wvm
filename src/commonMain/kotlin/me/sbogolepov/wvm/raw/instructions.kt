@@ -24,7 +24,7 @@ class Br(val labelIdx: UInt): Instruction()
 class BrIf(val labelIdx: UInt): Instruction()
 class BrTable(val table: Array<UInt>, val default: UInt): Instruction()
 object Return: Instruction()
-class Call(val function: UInt): Instruction()
+class Call(val functionId: UInt): Instruction()
 class CallIndirect(val typeIdx: UInt): Instruction()
 
 object Drop : Instruction()
