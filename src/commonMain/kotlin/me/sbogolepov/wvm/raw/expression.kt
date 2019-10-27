@@ -4,4 +4,4 @@ interface Expression
 
 interface ConstantExpression: Expression
 
-class ExpressionImpl(val instructions: Array<Instruction>) : Expression
+class InstructionSeq(val instructions: Array<Instruction>) : Expression

@@ -45,7 +45,7 @@ val ParserGenerator.importDescription get() = parser<ImportDescription> {
     when (val byte = (+byte).toInt()) {
         0x00 -> FunctionImport(+u32)
         0x01 -> TableImport(+tableType)
-        0x02 -> MemoryImport(Memory(+limits))
+        0x02 -> MemoryImport(MemoryType(+limits))
         0x03 -> GlobalImport(+globalType)
         else -> error("Unexpected import description: ${byte.toString(16)}")
     }
@@ -104,9 +104,8 @@ val ParserGenerator.sectionHeader get() = parser<SectionHeader> {
 
 fun ParserGenerator.customSection(sectionSize: Int) = parser<CustomSection> {
     val name = +name
-    val bytesInSection = sectionSize - bytesRead
-    val bytes: List<Byte> = (0..bytesInSection).map { +byte }
-    CustomSection(name, bytes.toByteArray())
+    val bytes = (0 until (sectionSize - bytesRead)).map { +byte }.toByteArray()
+    CustomSection(name, bytes)
 }
 
 val ParserGenerator.typeSection get() = parser<TypeSection> {
@@ -126,7 +125,7 @@ val ParserGenerator.tableSection get() = parser<TableSection> {
 }
 
 val ParserGenerator.memorySection get() = parser<MemorySection> {
-    MemorySection((+vector(limits)).map { Memory(it) }.toTypedArray())
+    MemorySection((+vector(limits)).map { MemoryType(it) }.toTypedArray())
 }
 
 val ParserGenerator.globalSection get() = parser<GlobalSection> {

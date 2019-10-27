@@ -1,11 +1,12 @@
 plugins {
-    kotlin("multiplatform") version "1.3.50"
+    kotlin("multiplatform") version "1.3.60-eap-143"
 }
 
 group = "me.sbogolepov"
 version = "1.0-SNAPSHOT"
 
 repositories {
+    maven("https://dl.bintray.com/kotlin/kotlin-eap")
     mavenCentral()
     jcenter()
 }
@@ -43,8 +44,11 @@ kotlin {
     jvm()
     macosX64 {
         binaries {
-            executable("wvm-nm") {
-                entryPoint = "me.sbogolepov.wvm.tools.nm.main"
+//            executable("wvm-nm") {
+//                entryPoint = "me.sbogolepov.wvm.tools.nm.main"
+//            }
+            executable("wvm-run") {
+                entryPoint = "main"
             }
         }
     }

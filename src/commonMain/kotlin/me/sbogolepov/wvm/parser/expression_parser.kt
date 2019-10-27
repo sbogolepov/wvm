@@ -3,7 +3,7 @@ package me.sbogolepov.wvm.parser
 import me.sbogolepov.wvm.raw.*
 
 val ParserGenerator.expr get() = parser<Expression> {
-    ExpressionImpl(+instructions)
+    InstructionSeq(+instructions)
 }
 
 val ParserGenerator.instruction: AParser<Instruction> get() = parser {

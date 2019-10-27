@@ -4,6 +4,7 @@ import kotlinx.cinterop.*
 import platform.Foundation.NSData
 import platform.Foundation.NSFileHandle
 import platform.Foundation.fileHandleForReadingAtPath
+import platform.Foundation.readDataToEndOfFile
 import platform.posix.fprintf
 import platform.posix.stderr
 
@@ -21,7 +22,7 @@ actual fun openFile(path: String, readMode: FileReadMode): FileOpenResult {
 actual class RawData(val nsData: NSData)
 
 @ExperimentalUnsignedTypes
-// TODO: Not only file endianness matters, but also system's.
+// TODO: System's endianness also matters.
 class NativeRawDataReader(val rawData: RawData, override val endianness: Endianness = Endianness.LITTLE) : RawDataReader {
 
     private val bytesStart: CPointer<ByteVar> = rawData.nsData.bytes as CPointer<ByteVar>

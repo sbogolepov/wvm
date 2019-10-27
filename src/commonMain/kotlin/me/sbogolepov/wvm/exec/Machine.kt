@@ -1,47 +1,72 @@
 package me.sbogolepov.wvm.exec
 
+import me.sbogolepov.wvm.parser.generator.FunctionType
+import me.sbogolepov.wvm.parser.generator.Module
 import me.sbogolepov.wvm.parser.generator.Value
 import me.sbogolepov.wvm.raw.Instruction
 
-inline class Address(val index: UInt)
 
-sealed class Function
+interface Stack<T> {
+    fun push(value: T)
 
-class HostFunction : Function()
-class UsualFunction(val code: Sequence<Instruction>) : Function()
+    fun pop(): T
 
-interface Stack {
-    fun <T: Value<*>> push(value: T)
-
-    fun <T: Value<*>> pop(): T
-
-    fun <T: Value<*>> peek(): T
+    fun peek(): T?
 }
 
-// TODO: Add grow, etc
-interface Memory {
-    fun load(address: Address, count: Int): ByteArray
-    fun store(address: Address, value: ByteArray)
-}
+abstract class StackBase<T> : Stack<T> {
+    private val storage = mutableListOf<T>()
 
-interface Logger {
-    enum class Severity {
-        INFO, WARNING, ERROR
+    override fun push(value: T) {
+        storage += value
     }
 
-    fun log(severity: Severity, message: String)
+    override fun pop(): T {
+        val last = storage.last()
+        storage.removeAt(storage.lastIndex)
+        return last
+    }
 
-    fun logState(severity: Severity, machine: Machine)
+    override fun peek(): T? =
+        if (storage.isEmpty()) null else storage.last()
+
+    fun investigate(fn: (Int, T) -> Unit) = storage.reversed().forEachIndexed(fn)
 }
 
 interface Environment {
-    fun provide(functionSymbol: String): Function?
+
+    val functions: List<HostFunction>
+
+    val tables: List<TableInstance>
+
+    val mems: List<MemoryInstance>
+
+    val globals: List<GlobalInstance>
+
+    val types: List<FunctionType>
+
+    fun eval(callee: HostFunction, args: List<Value<*>>): List<Value<*>>
 }
 
 interface Machine {
-    val memory: Memory
-    val stack: Stack
+    val logger: Logger
+
+    val modules: Map<String, ModuleInstance>
+    val store: Store
+
+    var module: ModuleInstance
+
     val environment: Environment
 
-    fun exec(instructions: Sequence<Instruction>, locals: ArrayList<Value<*>>)
+    fun eval(instructions: List<Instruction>): Value<*>?
+
+    fun exec(entryPoint: FunctionAddress)
+
+    fun loadModule(name: String, module: Module)
+
+    fun investigateStack(fn: (Int, Value<*>) -> Unit)
+
+    fun investigateFrameStack(fn: (Int, Frame) -> Unit)
+
+    fun error(message: String): Nothing
 }

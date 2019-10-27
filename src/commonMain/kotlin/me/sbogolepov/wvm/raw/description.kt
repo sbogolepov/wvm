@@ -1,6 +1,5 @@
 package me.sbogolepov.wvm.parser.generator
 
-import me.sbogolepov.wvm.raw.ConstantExpression
 import me.sbogolepov.wvm.raw.Expression
 
 
@@ -29,7 +28,7 @@ sealed class Limits(val min: UInt) {
     class Closed(min: UInt, val max: UInt) : Limits(min)
 }
 
-class Memory(val limits: Limits)
+class MemoryType(val limits: Limits)
 
 class TableType(val elementType: ElementType, val limits: Limits) {
     enum class ElementType {
@@ -46,7 +45,7 @@ class Import(val module: String, val name: String, val description: ImportDescri
 sealed class ImportDescription
 class FunctionImport(val typeIndex: UInt) : ImportDescription()
 class TableImport(val table: TableType) : ImportDescription()
-class MemoryImport(val memory: Memory) : ImportDescription()
+class MemoryImport(val memory: MemoryType) : ImportDescription()
 class GlobalImport(val globalType: GlobalType) : ImportDescription()
 
 class Export(val name: String, val description: ExportDescription)
@@ -75,7 +74,7 @@ class TypeSection(val types: Array<FunctionType>) : Section()
 class ImportSection(val imports: Array<Import>) : Section()
 class FunctionSection(val typesIndices: Array<UInt>) : Section()
 class TableSection(val tables: Array<TableType>) : Section()
-class MemorySection(val memories: Array<Memory>) : Section()
+class MemorySection(val memories: Array<MemoryType>) : Section()
 class GlobalSection(val globals: Array<Global>) : Section()
 class ExportSection(val exports: Array<Export>) : Section()
 class StartSection(val start: UInt) : Section()
