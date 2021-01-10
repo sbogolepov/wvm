@@ -2,20 +2,16 @@ package me.sbogolepov.wvm.parser
 
 import me.sbogolepov.wvm.io.*
 import me.sbogolepov.wvm.parser.generator.*
+import okio.Path.Companion.toPath
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
-import kotlin.test.fail
 
 class Tests {
     @Test
     fun test() {
-        val path = "/Users/jetbrains/src/wvm/src/commonTest/resources/trivial.wasm"
-        val handle = when (val result = openFile(path, FileReadMode.RB)) {
-            is FileOpenResult.Error -> fail("IO failed: ${result.message}")
-            is FileOpenResult.Ok -> result.handle
-        }
-        val reader: RawDataReader = createRawDataReader(handle)
+        val path = "/Users/sergey.bogolepov/wvm/src/commonTest/resources/trivial.wasm"
+        val reader: RawDataReader = OkioRawDataReader(path.toPath())
         reader.magic().forEachIndexed { idx, value ->
             assertEquals(WASM_MAGIC[idx], value)
         }

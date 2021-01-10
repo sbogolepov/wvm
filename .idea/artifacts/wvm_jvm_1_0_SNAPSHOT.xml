@@ -2,7 +2,7 @@
   <artifact type="jar" name="wvm-jvm-1.0-SNAPSHOT">
     <output-path>$PROJECT_DIR$/build/libs</output-path>
     <root id="archive" name="wvm-jvm-1.0-SNAPSHOT.jar">
-      <element id="module-output" name="me.sbogolepov.wvm.jvmMain" />
+      <element id="module-output" name="wvm.jvmMain" />
     </root>
   </artifact>
 </component>
